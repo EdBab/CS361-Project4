@@ -103,7 +103,7 @@ public class AES {
 	private static void formKeySchedule(byte[][] keySchedule, byte[][] keyBytes) {
 		byte[] temp = new byte[4];
 		
-		
+		//fill first four columns of keySchedule with keyBytes
 		for(int r = 0; r < keyBytes.length; r++)
 			for(int c = 0; c < keyBytes[r].length; c++) 
 				keySchedule[r][c] = keyBytes[r][c];
@@ -130,27 +130,32 @@ public class AES {
 	 */
 	private static void rotWordSubBytes(byte[][] keyBytes, int c) {
 		byte[] temp = new byte[4];
-		byte tempB = keyBytes[0][c - 1];
 		
+		
+		
+		//rotate word @ (c - 1) into temp
+		byte firstByte = keyBytes[0][c - 1];
 		for(int r = 0; r < keyBytes.length - 1; r ++) {
 			temp[r] = keyBytes[r + 1][c - 1];
-		} temp[keyBytes.length - 1] = tempB;
+		} temp[keyBytes.length - 1] = firstByte;
 		
 		
 		
-		
+		//perform SubBytes and add to the column 4 behind current column and xor with Rcon
 		for(int r = 0; r < keyBytes.length; r++) {
-			//int rowSbox = (int)((temp[r] >> 4) & 0x0F);
-			//int colSbox = (int)(temp[r]        & 0x0F);
-			//System.out.print("\nrow = "  + rowSbox + " col = " 	+ colSbox);
-			temp[r] = (byte)(0xff & SBOX[(0xFF & temp[r])]);
-			System.out.print(" value retrieved = " + Integer.toHexString( 0xff & (int)temp[r]) + "\n");
+			temp[r] = (byte)(0xff & SBOX[(0xFF & temp[r])]);//change temp to its subBytes
+			//***DEBUG****
+			System.out.print(" value retrieved = " 
+			+ Integer.toHexString( 0xff & (int)temp[r]) + "\n");
 			System.out.println("Rcon # " + c / 4 + " = " + Rcon[r][c /4]);
+			//***/DEBUG***
+			
+			//xor
 			temp[r] = (byte)((temp[r] ^ keyBytes[r][c - 4]) ^ (0xF & Rcon[r][c / 4]));
 		}
 		
 		
-		
+		//put back in keySchedule @ c
 		for(int r = 0; r < keyBytes.length; r++) {
 			keyBytes[r][c] = temp[r];
 		}
@@ -164,7 +169,7 @@ public class AES {
 	 * The purpose of this is to get to the next block
 	 */
 	private static void addRoundKey(byte[][] plainBytes, byte[][] keyBytes, int roundNum) {
-		int buffer = roundNum * 4;;
+		int buffer = roundNum * 4;
 		for(int c = 0; c < plainBytes[0].length; c++)
 			for(int r = 0; r < plainBytes.length; r++) {
 				plainBytes[r][c] ^= keyBytes[r][c + buffer];
@@ -296,6 +301,7 @@ public class AES {
 	
 	/**
 	 * SBOX vals
+	 * @source wikipedia
 	 */
 	final static int[] SBOX = 
 		{
