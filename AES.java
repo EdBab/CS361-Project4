@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 
 public class AES {
-	
+	private static boolean DEBUG = true;
 	public static void main(String[] args) {
 
 		/*	FileInputStream plaintext = new FileInputStream(new File("plaintext.txt"));
@@ -49,9 +49,11 @@ public class AES {
 			byte[][] keySchedule = new byte[4][44];
 			formKeySchedule(keySchedule, keybytes);
 			
-			printBlock("Plaintext", state);
-			printBlock("CipherKey", keybytes);
-			printBlock("expanded key", keySchedule); //****DEBUG****
+			if(DEBUG) {
+				printBlock("Plaintext", state);
+				printBlock("CipherKey", keybytes);
+				printBlock("expanded key", keySchedule); 
+			}
 			
 			
 			//byte[][] state = new byte[4][4];
@@ -59,18 +61,20 @@ public class AES {
 			//if(!fillBytes(state, plaintext))
 				//System.out.println("Ran out of plaintext to encrypt");
 			
-			addRoundKey(state, keySchedule, 0);
 			//byte[][] nextState = addRoundKey(plainBytes, keyBytes);
 			
 			int numRounds = 9;
 			for(int roundNum = 0; roundNum < numRounds + 1; roundNum++) {
-				subBytes(state);
-				shiftRows(state);
-				if(roundNum != numRounds)
-					mixColumns(state);
 				addRoundKey(state, keySchedule, roundNum);
+				subBytes(state, roundNum);
+				shiftRows(state, roundNum);
+				if(roundNum != numRounds)
+					mixColumns(state, roundNum);
+				else 
+					addRoundKey(state, keySchedule, roundNum + 1);
 			}
 			
+			if(DEBUG) printBlock("ciphertext", state);
 			
 			
 /*			plaintext.close();
@@ -172,18 +176,36 @@ public class AES {
 	 * @param roundNum used to create buffer within the keySchedule input. <br>
 	 * The purpose of this is to get to the next block
 	 */
-	private static void addRoundKey(byte[][] plainBytes, byte[][] keyBytes, int roundNum) {
+	private static void addRoundKey(byte[][] state, byte[][] keyBytes, int roundNum) {
 		int buffer = roundNum * 4;
-		for(int c = 0; c < plainBytes[0].length; c++)
-			for(int r = 0; r < plainBytes.length; r++) {
-				plainBytes[r][c] ^= keyBytes[r][c + buffer];
+		for(int c = 0; c < state[0].length; c++)
+			for(int r = 0; r < state.length; r++) {
+				state[r][c] ^= keyBytes[r][c + buffer];
 			}
+		if(DEBUG) printState("addRoundKey", state, roundNum);
 	}
 
+	
+	/**
+	 * prints the current array following the func
+	 * @param funcName func it is in
+	 * @param state current state array
+	 * @param roundNum round number
+	 */
+	private static void printState(String funcName, byte[][] state, int roundNum) {
+		System.out.println("After " + funcName + "(" + roundNum +"): ");
+		for(int c = 0; c < state.length; c++)
+			for(int r = 0; r < state.length; r++) {
+				System.out.print(Integer.toHexString(0xFF & (int)state[r][c]).toUpperCase());
+			}
+		System.out.println();
+	}
+
+	
+	
+	
 	//*********MIXCOLUMNS FROM DR. YOUNG*************\\
-
-
-    private static byte mul (int a, byte b) {
+	private static byte mul (int a, byte b) {
 	int inda = (a < 0) ? (a + 256) : a;
 	int indb = (b < 0) ? (b + 256) : b;
 
@@ -239,16 +261,17 @@ public class AES {
      * Perform mixCols, utilized Bill's methods
      * @param bytes state array
      */
-	private static void mixColumns(byte[][] bytes) {
+	private static void mixColumns(byte[][] bytes, int roundNum) {
 		for(int c = 0; c < 4; c++)
 			mixColumn2(bytes, c);
+		if(DEBUG) printState("mixColumns", bytes, roundNum);
 	}
 
 	/**
 	 * shiftRows accordingly
 	 * @param bytes state array to have shifted
 	 */
-	private static void shiftRows(byte[][] bytes) {
+	private static void shiftRows(byte[][] bytes, int roundNum) {
 		ArrayList<Byte> b = new ArrayList<Byte>();
 		int i;
 		for(int r = 1; r < bytes.length; r++) {
@@ -260,6 +283,7 @@ public class AES {
 			for(i = 0; i < bytes[r].length; i++)
 				bytes[r][i] = b.remove(0);
 		}
+		if(DEBUG) printState("shiftRows", bytes, roundNum);
 	}
 
 	
@@ -267,11 +291,12 @@ public class AES {
 	 * subBytes from SBOX
 	 * @param bytes state array to sub into
 	 */
-	private static void subBytes(byte[][] bytes) {
+	private static void subBytes(byte[][] bytes, int roundNum) {
 		for(int c = 0; c < bytes[0].length; c++) 
 			for(int r = 0; r < bytes.length; r++) {
 				bytes[r][c] = (byte)(0xFF & SBOX[(0xFF & bytes[r][c])]);
 			}
+		if(DEBUG) printState("subBytes", bytes, roundNum);
 	}
 
 	/**
