@@ -105,6 +105,10 @@ public class AES {
 		
 	}
 
+	/**
+	 * invert subBytes
+	 * @param bytes state array
+	 */
 	private static void invSubBytes(byte[][] bytes) {
 		for(int c = 0; c < bytes[0].length; c++) 
 			for(int r = 0; r < bytes.length; r++) {
@@ -113,6 +117,10 @@ public class AES {
 		if(DEBUG) printState("invSubBytes", bytes);	
 	}
 
+	/**
+	 * invert shift rows
+	 * @param bytes state array
+	 */
 	private static void invShiftRows(byte[][] bytes) {
 		ArrayList<Byte> b = new ArrayList<Byte>();
 		int i;
@@ -128,6 +136,10 @@ public class AES {
 		if(DEBUG) printState("invShiftRows", bytes);
 	}
 
+	/**
+	 * invert mixColumns, utulizes bills code
+	 * @param bytes state array
+	 */
 	private static void invMixColumns(byte[][] bytes) {
 		for(int c = bytes.length - 1; c >= 0; c--)
 			invMixColumn2(bytes, c);
