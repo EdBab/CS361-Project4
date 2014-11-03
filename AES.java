@@ -23,20 +23,20 @@ public class AES {
 			
 
 		
-		/*				FROM RIJNDAEL ANIMATION
+						//FROM RIJNDAEL ANIMATION
 		
 			byte[][] keybytes = {{0x2b, 0x28, (byte) 0xab, 0x09},
 								   {0x7e, (byte)0xae, (byte)0xf7, (byte)0xcf}, 
 								   {0x15, (byte)0xd2, 0x15, 0x4f},
 								   {0x16, (byte)0xa6, (byte)0x88, 0x3c}};
-	     */
+	    
 		
 		//BILLS DEFAULT
-		byte[][] keybytes = {
+		/*byte[][] keybytes = {
 				{0x00, 0x00, 0x00, 0x00},
 				{0x00, 0x00, 0x00, 0x00},
 				{0x00, 0x00, 0x00, 0x00},
-				{0x00, 0x00, 0x00, 0x00}};
+				{0x00, 0x00, 0x00, 0x00}};*/
 			
 			
 
@@ -145,13 +145,17 @@ public class AES {
 		for(int r = 0; r < keyBytes.length; r++) {
 			temp[r] = (byte)(0xff & SBOX[(0xFF & temp[r])]);//change temp to its subBytes
 			//***DEBUG****
-			System.out.print(" value retrieved = " 
+			
+			
+			/*System.out.print(" value retrieved = " 
 			+ Integer.toHexString( 0xff & (int)temp[r]) + "\n");
-			System.out.println("Rcon # " + c / 4 + " = " + Rcon[r][c /4]);
+			System.out.println("Rcon # " + c / 4 + " = " + Rcon[r][c /4]);*/
+			
+			
 			//***/DEBUG***
 			
 			//xor
-			temp[r] = (byte)((temp[r] ^ keyBytes[r][c - 4]) ^ (0xF & Rcon[r][c / 4]));
+			temp[r] = (byte)((temp[r] ^ keyBytes[r][c - 4]) ^ (0xFF & Rcon[r][c / 4]));
 		}
 		
 		
