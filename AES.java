@@ -25,29 +25,36 @@ public class AES {
 		
 						//FROM RIJNDAEL ANIMATION
 		
-			byte[][] keybytes = {{0x2b, 0x28, (byte) 0xab, 0x09},
+			/*byte[][] keybytes = {{0x2b, 0x28, (byte) 0xab, 0x09},
 								   {0x7e, (byte)0xae, (byte)0xf7, (byte)0xcf}, 
 								   {0x15, (byte)0xd2, 0x15, 0x4f},
-								   {0x16, (byte)0xa6, (byte)0x88, 0x3c}};
+								   {0x16, (byte)0xa6, (byte)0x88, 0x3c}};*/
 	    
 		
 		//BILLS DEFAULT
-		/*byte[][] keybytes = {
+		byte[][] keybytes = {
 				{0x00, 0x00, 0x00, 0x00},
 				{0x00, 0x00, 0x00, 0x00},
 				{0x00, 0x00, 0x00, 0x00},
-				{0x00, 0x00, 0x00, 0x00}};*/
+				{0x00, 0x00, 0x00, 0x00}};
 			
+		byte[][] state = {
+				{0x00, 0x00, 0x00, 0x00},
+				{0x00, 0x00, 0x00, 0x00},
+				{0x00, 0x00, 0x00, 0x00},
+				{0x00, 0x00, 0x00, 0x00}
+		};
 			
 
 			byte[][] keySchedule = new byte[4][44];
 			formKeySchedule(keySchedule, keybytes);
 			
+			printBlock("Plaintext", state);
+			printBlock("CipherKey", keybytes);
+			printBlock("expanded key", keySchedule); //****DEBUG****
 			
-			printKeySched(keySchedule); //****DEBUG****
-
 			
-			byte[][] state = new byte[4][4];
+			//byte[][] state = new byte[4][4];
 			//fills first 16 bytes
 			//if(!fillBytes(state, plaintext))
 				//System.out.println("Ran out of plaintext to encrypt");
@@ -80,19 +87,24 @@ public class AES {
 	}
 
 	/**
-	 * Debug to print key schedule. Not formatted, so can look weird<br>
-	 * @param keySchedule key sched to be printed
+	 * 
+	 * Prints block. 
+	 * @param name name of thing to print
+	 * @param bytes stuff to print
+	 * @TODO Format the text so it looks like a block
 	 */
-	private static void printKeySched(byte[][] keySchedule) {
+	private static void printBlock(String name, byte[][] bytes) {
+		System.out.println("The " + name + " is:");
 		for(int r = 0; r < 4; r ++) {
-			for(int c = 0; c < 44; c++) {
+			for(int c = 0; c < bytes[r].length; c++) {
 				System.out.print(Integer.toHexString(( 0xFF &
-						(int)keySchedule[r][c])).toUpperCase());
+						(int)bytes[r][c])).toUpperCase());
 				if((c + 1) % 4 == 0)
 					System.out.print(" ");
 			}
 			System.out.print("\n");
 		}
+		System.out.println();
 	}
 
 	/**
@@ -129,35 +141,23 @@ public class AES {
 	 * @param c Column number where the new bytes should be placed
 	 */
 	private static void rotWordSubBytes(byte[][] keyBytes, int c) {
-		byte[] temp = new byte[4];
-		
-		
+		//tempArr for rotWord
+		byte[] temp = new byte[4];		
 		
 		//rotate word @ (c - 1) into temp
 		byte firstByte = keyBytes[0][c - 1];
 		for(int r = 0; r < keyBytes.length - 1; r ++) {
 			temp[r] = keyBytes[r + 1][c - 1];
-		} temp[keyBytes.length - 1] = firstByte;
-		
-		
+		} temp[keyBytes.length - 1] = firstByte;		
 		
 		//perform SubBytes and add to the column 4 behind current column and xor with Rcon
 		for(int r = 0; r < keyBytes.length; r++) {
 			temp[r] = (byte)(0xff & SBOX[(0xFF & temp[r])]);//change temp to its subBytes
-			//***DEBUG****
-			
-			
-			/*System.out.print(" value retrieved = " 
-			+ Integer.toHexString( 0xff & (int)temp[r]) + "\n");
-			System.out.println("Rcon # " + c / 4 + " = " + Rcon[r][c /4]);*/
-			
-			
-			//***/DEBUG***
-			
 			//xor
-			temp[r] = (byte)((temp[r] ^ keyBytes[r][c - 4]) ^ (0xFF & Rcon[r][c / 4]));
-		}
-		
+			temp[r] =  (byte)((temp[r] ^ 
+					keyBytes[r][c - 4]) ^ 
+					(0xFF & Rcon[r][c / 4]));
+		}		
 		
 		//put back in keySchedule @ c
 		for(int r = 0; r < keyBytes.length; r++) {
