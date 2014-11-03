@@ -221,25 +221,6 @@ public class AES {
 		if(DEBUG) printState("addRoundKey("+roundNum+")", state);
 	}
 
-	
-	/**
-	 * prints the current array following the func
-	 * @param funcName func it is in
-	 * @param state current state array
-	 * @param roundNum round number
-	 */
-	private static void printState(String funcName, byte[][] state) {
-		System.out.println("After " + funcName + ": ");
-		for(int c = 0; c < state.length; c++)
-			for(int r = 0; r < state.length; r++) {
-				System.out.print(Integer.toHexString(0xFF & (int)state[r][c]).toUpperCase());
-			}
-		System.out.println();
-	}
-
-	
-	
-	
 
 	
     /**
@@ -474,6 +455,22 @@ public class AES {
 	
     
     //******************DEBUG STUFF********************
+    
+	/**
+	 * prints the current array following the func
+	 * @param funcName func it is in
+	 * @param state current state array
+	 * @param roundNum round number
+	 */
+	private static void printState(String funcName, byte[][] state) {
+		System.out.println("After " + funcName + ": ");
+		for(int c = 0; c < state.length; c++)
+			for(int r = 0; r < state.length; r++) {
+				System.out.print(Integer.toHexString(0xFF & (int)state[r][c]).toUpperCase());
+			}
+		System.out.println();
+	}
+    
     
 	/**
 	 * 
