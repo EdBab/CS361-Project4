@@ -1,0 +1,181 @@
+ String keyFileName = args[1];
+
+                File test = new File(keyFileName);
+                Scanner sc = new Scanner(test);
+
+                String regFileName = args[2];
+
+                // String outputFile = regFileName;
+
+                File test2 = new File(regFileName);
+                Scanner fileScan = new Scanner(test2);
+
+                boolean encrypting = true;
+
+                // BILLS DEFAULT
+                byte[][] keybytes = new byte[4][4];// {
+                /*
+                 * {0x00, 0x00, 0x00, 0x00}, {0x00, 0x00, 0x00, 0x00}, {0x00, 0x00,
+                 * 0x00, 0x00}, {0x00, 0x00, 0x00, 0x00}};
+                 */
+
+                String key = sc.nextLine();
+                int i = 0;
+                for (int r = 0; r < keybytes[0].length; r++) {
+                        for (int c = 0; c < keybytes.length; c++) {
+                                keybytes[r][c] = Byte.valueOf(key.substring(i, i + 2));
+                                i+=2;
+
+                        }
+                }
+
+                // assuming this is input message
+                byte[][] state = new byte[4][4];/*
+                                                                                 * { {0x00, 0x00, 0x00, 0x00}, {0x00,
+                                                                                 * 0x00, 0x00, 0x00}, {0x00, 0x00, 0x00,
+                                                                                 * 0x00}, {0x00, 0x00, 0x00, 0x00} };
+                                                                                 */
+                                                                       byte[][] keySchedule = new byte[4][44];
+                formKeySchedule(keySchedule, keybytes);
+
+                if (DEBUG) {
+                        printBlock("Plaintext", state);
+                        printBlock("CipherKey", keybytes);
+                        printBlock("expanded key", keySchedule);
+                }
+
+                // byte[][] state = new byte[4][4];
+                // fills first 16 bytes
+                // if(!fillBytes(state, plaintext))
+                // System.out.println("Ran out of plaintext to encrypt");
+
+                // byte[][] nextState = addRoundKey(plainBytes, keyBytes);
+
+                String line = null;
+                int k = 0;
+
+                if (args[0].equals("e")) {
+
+                        PrintWriter outWriter = new PrintWriter(regFileName + ".enc",
+                                        "UTF-8");
+                        while (fileScan.hasNextLine()) {
+                                // TODO: Add streamed input
+
+                                line = fileScan.nextLine();
+
+                                if (line.length() > 32) {
+
+                                        line = line.substring(0, 33);
+                                } else if (line.length() < 32) {
+
+                                        int check = 32 - line.length();
+                                        for (int p = 0; p < check; p++) {
+                                                line += "0";
+                                                                        }
+                                }
+                                // check
+                                for (int r = 0; r < state[0].length; r++) {
+                                        for (int c = 0; c < state.length; c++) {
+                                                state[r][c] = (byte) Integer.parseInt(
+                                                                (line.substring(k, k + 2)), 16);
+                                                k += 2;
+
+                                        }
+                                }
+                                // System.out.println();
+                                k = 0;
+
+                                addRoundKey(state, keySchedule, 0);
+                                for (int roundNum = 1; roundNum <= NUMROUNDS; roundNum++) {
+
+                                        subBytes(state);
+                                        shiftRows(state);
+                                        if (roundNum != NUMROUNDS) /* last round dont do this */
+                                                mixColumns(state);
+
+                                        addRoundKey(state, keySchedule, roundNum);
+
+                                }
+
+                                // check
+                                for (int r = 0; r < state[0].length; r++) {
+                                        for (int c = 0; c < state.length; c++) {
+                                                outWriter.print((Integer.toHexString(( 0xFF &
+                                                                (int)state[r][c])).toUpperCase()));
+                                        }
+                                }
+                                outWriter.println();
+
+                                // printBlock("ciphertext", state);
+
+                                // TODO: Add output
+                                                                       }
+                        outWriter.close();
+                }
+                k = 0;
+                if (args[0].equals("d")) {
+                        PrintWriter outWriter = new PrintWriter(regFileName + ".dec",
+                                        "UTF-8");
+                        // TODO: Add streamed input
+                        while (fileScan.hasNextLine()) {
+                                line = fileScan.nextLine();
+                                if (line.length() > 32) {
+                                        line = line.substring(0, 33);
+                                } else if (line.length() < 32) {
+                                        int check = 32 - line.length();
+                                        for (int p = 0; p < check; p++) {
+                                                line += "0";
+                                        }
+                                }
+                                for (int r = 0; r < state[0].length; r++) {
+                                        for (int c = 0; c < state.length; c++) {
+
+                                                state[r][c] = (byte) Integer.parseInt(
+                                                                (line.substring(k, k + 2)), 16);
+                                                System.out.println("hey look " + state[r][c]);
+                                                k += 2;
+
+                                        }
+                                }
+
+                                k = 0;
+
+                                for (int roundNum = NUMROUNDS; roundNum > 0; roundNum--) {
+                                        addRoundKey(state, keySchedule, roundNum);
+                                        if (roundNum != NUMROUNDS)
+                                                invMixColumns(state);
+                                        invShiftRows(state);
+                                        invSubBytes(state);
+                                                                       if (roundNum - 1 == 0)
+                                                addRoundKey(state, keySchedule, roundNum - 1);
+                                }
+
+                                for (int r = 0; r < state[0].length; r++) {
+                                        for (int c = 0; c < state.length; c++) {
+                                                outWriter.print((Integer.toHexString(( 0xFF &
+                                                                (int)state[r][c])).toUpperCase()));
+                                        }
+                                }
+                                outWriter.println();
+
+                                /*
+                                 * if (DEBUG) printBlock("decryption of the ciphertext", state);
+                                 * 
+                                 * if (DEBUG) printState("decription of the ciphertext", state);
+                                 */
+                                // TODO: Add output
+                        }
+                        outWriter.close();
+                }
+                /*
+                 * plaintext.close(); ciphertext.close(); keytext.close();
+                 */
+
+                /*
+                 * } catch (FileNotFoundException e) {
+                 * System.err.println("Cannot find the specified file.");
+                 * e.printStackTrace(); } catch (IOException e) { e.printStackTrace(); }
+                 */
+
+        }
+                                                                      
