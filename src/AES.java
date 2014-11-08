@@ -57,12 +57,7 @@ public class AES {
 		byte[][] keySchedule = new byte[4][44];
 		formKeySchedule(keySchedule, keybytes);
 
-		if (DEBUG) {
-			printBlock("Plaintext", state);
-			printBlock("CipherKey", keybytes);
-			printBlock("expanded key", keySchedule);
-		}
-
+		
 		// byte[][] state = new byte[4][4];
 		// fills first 16 bytes
 		// if(!fillBytes(state, plaintext))
@@ -84,7 +79,7 @@ public class AES {
 				// TODO: Add streamed input
 				bytes += 16;
 				line = fileScan.nextLine();
-
+				
 				if (line.length() > 32) {
 
 					line = line.substring(0, 33);
@@ -95,6 +90,12 @@ public class AES {
 						line += "0";
 					}
 				}
+				
+				boolean isHex = line.matches("[0-9A-Fa-f]+");
+				if(!isHex){
+					continue;
+				}
+				
 				// check
 				for (int r = 0; r < state[0].length; r++) {
 					for (int c = 0; c < state.length; c++) {
@@ -127,11 +128,11 @@ public class AES {
 									.print("0"
 											+ (Integer
 													.toHexString((0xFF & (int) state[r][c]))
-													.toUpperCase()));
+													));
 						} else
 							outWriter.print((Integer
 									.toHexString((0xFF & (int) state[r][c]))
-									.toUpperCase()));
+									));
 					}
 				}
 				outWriter.println();
@@ -155,21 +156,13 @@ public class AES {
 			while (fileScan.hasNextLine()) {
 				bytes+=16;
 				line = fileScan.nextLine();
-				if (line.length() > 32) {
-					line = line.substring(0, 33);
-				} else if (line.length() < 32) {
-					int check = 32 - line.length();
-					for (int p = 0; p < check; p++) {
-						line += "0";
-					}
-				}
+			
 				for (int r = 0; r < state[0].length; r++) {
 					for (int c = 0; c < state.length; c++) {
 
 						state[r][c] = (byte) Integer.parseInt(
 								(line.substring(k, k + 2)), 16);
-						System.out.println("look "
-								+ Integer.toHexString(state[r][c]));
+						
 						k += 2;
 
 					}
@@ -189,9 +182,15 @@ public class AES {
 
 				for (int r = 0; r < state[0].length; r++) {
 					for (int c = 0; c < state.length; c++) {
-						outWriter.print((Integer
+						if((0xFF & (int) state[r][c]) < 16){
+						outWriter.print("0" + (Integer
 								.toHexString((0xFF & (int) state[r][c]))
-								.toUpperCase()));
+								));
+						}
+						else
+							outWriter.print((Integer
+									.toHexString((0xFF & (int) state[r][c]))
+									));
 					}
 				}
 				outWriter.println();
@@ -199,7 +198,7 @@ public class AES {
 				/*
 				 * if (DEBUG) printBlock("decryption of the ciphertext", state);
 				 * 
-				 * if (DEBUG) printState("decription of the ciphertext", state);
+				 * if (DEBUG)  ("decription of the ciphertext", state);
 				 */
 				// TODO: Add output
 			}
@@ -231,8 +230,7 @@ public class AES {
 			for (int r = 0; r < bytes.length; r++) {
 				bytes[r][c] = (byte) (0xFF & invSBOX[(0xFF & bytes[r][c])]);
 			}
-		if (DEBUG)
-			printState("invSubBytes", bytes);
+	
 	}
 
 	/**
@@ -253,8 +251,7 @@ public class AES {
 			for (i = 0; i < bytes[r].length; i++)
 				bytes[r][i] = b.remove(0);
 		}
-		if (DEBUG)
-			printState("invShiftRows", bytes);
+		
 	}
 
 	/**
@@ -266,8 +263,7 @@ public class AES {
 	private static void invMixColumns(byte[][] bytes) {
 		for (int c = bytes.length - 1; c >= 0; c--)
 			invMixColumn2(bytes, c);
-		if (DEBUG)
-			printState("invMixColumns", bytes);
+		
 	}
 
 	/**
@@ -353,8 +349,7 @@ public class AES {
 			for (int r = 0; r < state.length; r++) {
 				state[r][c] ^= keyBytes[r][c + buffer];
 			}
-		if (DEBUG)
-			printState("addRoundKey(" + roundNum + ")", state);
+	
 	}
 
 	/**
@@ -366,8 +361,7 @@ public class AES {
 	private static void mixColumns(byte[][] bytes) {
 		for (int c = 0; c < 4; c++)
 			mixColumn2(bytes, c);
-		if (DEBUG)
-			printState("mixColumns", bytes);
+		
 	}
 
 	/**
@@ -388,8 +382,7 @@ public class AES {
 			for (i = 0; i < bytes[r].length; i++)
 				bytes[r][i] = b.remove(0);
 		}
-		if (DEBUG)
-			printState("shiftRows", bytes);
+		
 	}
 
 	/**
@@ -403,8 +396,7 @@ public class AES {
 			for (int r = 0; r < bytes.length; r++) {
 				bytes[r][c] = (byte) (0xFF & SBOX[(0xFF & bytes[r][c])]);
 			}
-		if (DEBUG)
-			printState("subBytes", bytes);
+		
 	}
 
 	/**
@@ -605,50 +597,6 @@ public class AES {
 		bytes[3][c] = (byte) (mul(0xE, a[3]) ^ mul(0xB, a[0]) ^ mul(0xD, a[1]) ^ mul(
 				0x9, a[2]));
 	} // invMixColumn2
-
+}
 	// ******************DEBUG STUFF********************
 
-	/**
-	 * prints the current array following the func
-	 * 
-	 * @param funcName
-	 *            func it is in
-	 * @param state
-	 *            current state array
-	 * @param roundNum
-	 *            round number
-	 */
-	private static void printState(String funcName, byte[][] state) {
-		System.out.println("After " + funcName + ": ");
-		for (int c = 0; c < state.length; c++)
-			for (int r = 0; r < state.length; r++) {
-				System.out.print(Integer.toHexString(0xFF & (int) state[r][c])
-						.toUpperCase());
-			}
-		System.out.println();
-	}
-
-	/**
-	 * 
-	 * Prints block.
-	 * 
-	 * @param name
-	 *            name of thing to print
-	 * @param bytes
-	 *            stuff to print
-	 * @TODO Format the text so it looks like a block
-	 */
-	private static void printBlock(String name, byte[][] bytes) {
-		System.out.println("The " + name + " is:");
-		for (int r = 0; r < 4; r++) {
-			for (int c = 0; c < bytes[r].length; c++) {
-				System.out.print(Integer
-						.toHexString((0xFF & (int) bytes[r][c])).toUpperCase());
-				if ((c + 1) % 4 == 0)
-					System.out.print(" ");
-			}
-			System.out.print("\n");
-		}
-		System.out.println();
-	}
-}
